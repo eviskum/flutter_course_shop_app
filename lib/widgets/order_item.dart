@@ -46,7 +46,7 @@ class _OrderItemWidgetState extends State<OrderItemWidget> {
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              '${e.quantity} x €${e.price}',
+                              '${e.quantity} x €${e.price.toStringAsFixed(2)}',
                               style: const TextStyle(fontSize: 18, color: Colors.grey),
                             )
                           ],
