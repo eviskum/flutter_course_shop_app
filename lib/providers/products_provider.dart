@@ -2,13 +2,15 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_course_shop_app/models/http_exceptions.dart';
+import 'package:flutter_course_shop_app/providers/auth.dart';
 import 'package:flutter_course_shop_app/providers/product.dart';
 import 'package:http/http.dart';
 
 class Products with ChangeNotifier {
   static const String firebaseUrl = 'fluttercourse-viskum-default-rtdb.europe-west1.firebasedatabase.app';
-  static const String firebaseCollection = '/products';
-  final Uri firebaseUri = Uri.https(firebaseUrl, firebaseCollection + '.json');
+  static const String firebaseCollection = 'products';
+  String? _token;
+  String _userId = "default";
 
   final List<Product> _items = [
     // Product(
@@ -58,19 +60,26 @@ class Products with ChangeNotifier {
     return _items.where((element) => element.isFavorite).toList();
   }
 
-  Map<String, Object> toJSON(String title, String description, double price, String imageUrl, bool isFavorite) {
+  Map<String, Object> toJSON(
+    String title,
+    String description,
+    double price,
+    String imageUrl,
+    /* bool isFavorite */
+  ) {
     return {
       'title': title,
       'description': description,
       'price': price,
       'imageUrl': imageUrl,
-      'isFavorite': isFavorite,
+      // 'isFavorite': isFavorite,
     };
   }
 
   Future<void> addProduct(Product product) async {
     // return post(
     try {
+      final firebaseUri = Uri.https(firebaseUrl, firebaseCollection + '.json', {'auth': _token});
       final response = await post(
         firebaseUri,
         body: json.encode(
@@ -79,7 +88,7 @@ class Products with ChangeNotifier {
             product.description,
             product.price,
             product.imageUrl,
-            product.isFavorite,
+            // product.isFavorite,
           ),
         ),
         // ).then((response) {
@@ -107,19 +116,23 @@ class Products with ChangeNotifier {
 
   Future<void> fetchProducts() async {
     try {
+      final firebaseUri = Uri.https(firebaseUrl, firebaseCollection + '.json', {'auth': _token});
       final response = await get(firebaseUri);
-      final jsonData = json.decode(response.body) as Map<String, dynamic>;
+      final jsonData = json.decode(response.body) as Map<String, dynamic>?;
+      final firebaseFavoriteUri = Uri.https(firebaseUrl, 'favorite/$_userId.json', {'auth': _token});
+      final favoriteResponse = await get(firebaseFavoriteUri);
+      final favoriteJsonData = json.decode(favoriteResponse.body) as Map<String, dynamic>?;
       _items.clear();
+      if (jsonData == null) return;
       jsonData.forEach((key, value) {
         _items.add(
           Product(
-            id: key,
-            title: value['title'],
-            description: value['description'],
-            price: value['price'],
-            imageUrl: value['imageUrl'],
-            isFavorite: value['isFavorite'],
-          ),
+              id: key,
+              title: value['title'],
+              description: value['description'],
+              price: value['price'],
+              imageUrl: value['imageUrl'],
+              isFavorite: favoriteJsonData == null ? false : favoriteJsonData[key] ?? false),
         );
       });
       print(json.decode(response.body));
@@ -133,7 +146,7 @@ class Products with ChangeNotifier {
   Future<void> updateProduct(Product product) async {
     final prodIdx = _items.indexWhere((element) => element.id == product.id);
     if (prodIdx < 0) return;
-    final Uri firebaseDocUri = Uri.https(firebaseUrl, firebaseCollection + '/${product.id}.json');
+    final Uri firebaseDocUri = Uri.https(firebaseUrl, firebaseCollection + '/${product.id}.json', {'auth': _token});
     await patch(
       firebaseDocUri,
       body: json.encode(
@@ -142,7 +155,7 @@ class Products with ChangeNotifier {
           product.description,
           product.price,
           product.imageUrl,
-          product.isFavorite,
+          // product.isFavorite,
         ),
       ),
     );
@@ -155,7 +168,7 @@ class Products with ChangeNotifier {
     // if (prodIdx < 0) return;
     // _items.removeAt(prodIdx);
     // _items.remove(product);
-    final Uri firebaseDocUri = Uri.https(firebaseUrl, firebaseCollection + '/$id.json');
+    final Uri firebaseDocUri = Uri.https(firebaseUrl, firebaseCollection + '/$id.json', {'auth': _token});
     final existingProductIdx = _items.indexWhere((element) => element.id == id);
     final existingProduct = _items[existingProductIdx];
     _items.removeWhere((e) => e.id == id);
@@ -173,7 +186,21 @@ class Products with ChangeNotifier {
     return _items.firstWhere((element) => element.id == id);
   }
 
+  void updateAuth(Auth auth) async {
+    _token = auth.token;
+    _userId = auth.userId ?? "default";
+
+    if (_token == null) {
+      _items.clear();
+      notifyListeners();
+    } else {
+      await fetchProducts();
+    }
+    print('Products updateAuth called');
+  }
+
   Products() {
-    fetchProducts();
+    print('Products constructor called');
+    // fetchProducts();
   }
 }

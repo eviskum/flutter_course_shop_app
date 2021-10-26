@@ -14,17 +14,20 @@ class Product with ChangeNotifier {
   final String imageUrl;
   bool isFavorite;
 
-  void toggleFavorite() {
-    final Uri firebaseDocUri = Uri.https(firebaseUrl, firebaseCollection + '/$id.json');
+  void toggleFavorite(String? token, String userId) {
+    if (token == null) return;
+
+    final Uri firebaseDocUri = Uri.https(firebaseUrl, firebaseCollection + '/$id.json', {'auth': token});
+    final Uri firebaseFavoriteUri = Uri.https(firebaseUrl, 'favorite/$userId.json', {'auth': token});
 
     final _oldStatus = isFavorite;
     isFavorite = !isFavorite;
     notifyListeners();
 
     patch(
-      firebaseDocUri,
+      firebaseFavoriteUri,
       body: json.encode({
-        'isFavorite': isFavorite,
+        id: isFavorite,
       }),
     ).then((result) {
       print(result.statusCode);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_course_shop_app/providers/auth.dart';
 import 'package:flutter_course_shop_app/providers/cart.dart';
 import 'package:flutter_course_shop_app/providers/orders.dart';
+import 'package:flutter_course_shop_app/screens/auth_screen.dart';
 import 'package:flutter_course_shop_app/screens/cart_screen.dart';
 import 'package:flutter_course_shop_app/screens/edit_product_screen.dart';
 import 'package:flutter_course_shop_app/screens/orders_screen.dart';
@@ -22,30 +24,42 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (ctx) => Products()),
-        ChangeNotifierProvider(create: (ctx) => Cart()),
-        ChangeNotifierProvider(create: (ctx) => Orders()),
-      ],
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-          appBarTheme: const AppBarTheme(backgroundColor: Colors.purple),
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                secondary: Colors.deepOrange,
-              ),
-          fontFamily: 'Lato',
+        ChangeNotifierProvider(create: (ctx) => Auth()),
+        ChangeNotifierProxyProvider<Auth, Products>(
+          create: (_) => Products(),
+          update: (_, auth, products) => products!..updateAuth(auth),
         ),
-        // home: const MyHomePage(title: 'Flutter Demo Home Page'),
-        // home: ProductOverviewScreen(),
-        routes: {
-          '/': (context) => const ProductOverviewScreen(),
-          ProductDetailScreen.routeName: (context) => const ProductDetailScreen(),
-          CartScreen.routeName: (context) => const CartScreen(),
-          OrdersScreen.routeName: (context) => const OrdersScreen(),
-          UserProductsScreen.routeName: (context) => const UserProductsScreen(),
-          EditProductScreen.routeName: (context) => const EditProductScreen(),
-        },
+        ChangeNotifierProvider(create: (ctx) => Cart()),
+        // ChangeNotifierProvider(create: (ctx) => Orders()),
+        ChangeNotifierProxyProvider<Auth, Orders>(
+          create: (_) => Orders(),
+          update: (_, auth, orders) => orders!..updateAuth(auth),
+        ),
+      ],
+      child: Consumer<Auth>(
+        builder: (context, auth, _) => MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            primarySwatch: Colors.purple,
+            appBarTheme: const AppBarTheme(backgroundColor: Colors.purple),
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  secondary: Colors.deepOrange,
+                ),
+            fontFamily: 'Lato',
+          ),
+          // home: const MyHomePage(title: 'Flutter Demo Home Page'),
+          // home: ProductOverviewScreen(),
+          home: auth.isAuth ? ProductOverviewScreen() : AuthScreen(),
+          routes: {
+            // '/': (context) => const ProductOverviewScreen(),
+            // '/': (context) => AuthScreen(),
+            ProductDetailScreen.routeName: (context) => const ProductDetailScreen(),
+            CartScreen.routeName: (context) => const CartScreen(),
+            OrdersScreen.routeName: (context) => const OrdersScreen(),
+            UserProductsScreen.routeName: (context) => const UserProductsScreen(),
+            EditProductScreen.routeName: (context) => const EditProductScreen(),
+          },
+        ),
       ),
     );
   }
