@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_course_shop_app/helpers/api_key.dart';
 import 'package:flutter_course_shop_app/models/http_exceptions.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -12,9 +13,8 @@ class Auth with ChangeNotifier {
   static const _apiHostUrl = 'identitytoolkit.googleapis.com';
   static const _apiSignInUrl = 'v1/accounts:signInWithPassword';
   static const _apiSignUpUrl = 'v1/accounts:signUp';
-  static const _apiKey = 'AIzaSyCqiQ7k3drf1TzllAqgk3cdy0YPPEU9clk';
-  final Uri _signUpUri = Uri.https(_apiHostUrl, _apiSignUpUrl, {'key': _apiKey});
-  final Uri _signInUri = Uri.https(_apiHostUrl, _apiSignInUrl, {'key': _apiKey});
+  final Uri _signUpUri = Uri.https(_apiHostUrl, _apiSignUpUrl, {'key': apiKey});
+  final Uri _signInUri = Uri.https(_apiHostUrl, _apiSignInUrl, {'key': apiKey});
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   String? _token;

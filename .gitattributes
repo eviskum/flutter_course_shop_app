@@ -1,0 +1,2 @@
+lib/helpers/api_key.dart filter=git-crypt diff=git-crypt
+.gitattributes !filter !diff
